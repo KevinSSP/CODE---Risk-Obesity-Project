@@ -40,6 +40,16 @@ variables_modelo = [
 df_model = pd.read_csv(CSV_PATH)
 model = joblib.load(PKL_PATH)
 
+CLASS_MAP = {
+    0: "Insufficient_Weight",
+    1: "Normal_Weight",
+    2: "Overweight_Level_I",
+    3: "Overweight_Level_II",
+    4: "Obesity_Type_I",
+    5: "Obesity_Type_II",
+    6: "Obesity_Type_III"
+}
+
 # -----------------------------
 # 3) APP DASH
 # -----------------------------
@@ -146,8 +156,12 @@ def on_predict(n_clicks, *vals):
         return ""
     data = {v: val for v, val in zip(variables_modelo, vals)}
     df_new = pd.DataFrame([data])
+    #preds = model.predict(df_new)
+    #return f"Predicción: {preds[0]}"
     preds = model.predict(df_new)
-    return f"Predicción: {preds[0]}"
+    pred_class = CLASS_MAP[int(preds[0])]
+    return f"Predicción: {pred_class}"
+
 
 @app.callback(
     Output("hist-graph", "figure"),
@@ -205,6 +219,7 @@ def api_predict():
         else:
             return jsonify({"error": "Formato JSON inválido"}), 400
         preds = model.predict(data)
+        mapped = [CLASS_MAP[int(p)] for p in preds]
         return jsonify({"predictions": preds.tolist()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
